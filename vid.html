@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tutorial Video Hub</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+    }
+
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    button.danger {
+      background: #e53935;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .video-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .video-card {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Tutorial Video Hub</h1>
+  <p>Admin can upload & delete videos</p>
+</header>
+
+<div class="container">
+
+  <!-- ADMIN LOGIN -->
+  <div id="loginSection" class="card">
+    <h3>Admin Login</h3>
+    <input type="password" id="adminPassword" placeholder="Enter admin password" />
+    <br />
+    <button onclick="loginAdmin()">Login</button>
+    <p id="loginMsg" style="color:red;"></p>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="adminDashboard" class="card hidden">
+    <h3>Admin Dashboard</h3>
+    <input type="file" id="videoUpload" accept="video/*" />
+    <br />
+    <button onclick="uploadVideo()">Upload Video</button>
+    <br />
+    <button class="danger" onclick="logoutAdmin()">Logout</button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="card">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search videos..." onkeyup="searchVideos()" />
+    </div>
+  </div>
+
+  <!-- VIDEO LIST -->
+  <div id="videoList" class="video-list"></div>
+
+</div>
+
+<script>
+  // ===== STATE =====
+  let videos = [];
+  let isAdmin = false;
+  const ADMIN_PASSWORD = "123"; // demo only
+
+  // ===== AUTH =====
+  function loginAdmin() {
+    const pass = document.getElementById("adminPassword").value;
+    if (pass === ADMIN_PASSWORD) {
+      isAdmin = true;
+      document.getElementById("loginSection").classList.add("hidden");
+      document.getElementById("adminDashboard").classList.remove("hidden");
+      renderVideos(videos);
+    } else {
+      document.getElementById("loginMsg").innerText = "Wrong password";
+    }
+  }
+
+  function logoutAdmin() {
+    isAdmin = false;
+    document.getElementById("loginSection").classList.remove("hidden");
+    document.getElementById("adminDashboard").classList.add("hidden");
+    renderVideos(videos);
+  }
+
+  // ===== VIDEO UPLOAD =====
+  function uploadVideo() {
+    const input = document.getElementById("videoUpload");
+    const file = input.files[0];
+    if (!file) return;
+
+    videos.push({
+      id: Date.now(),
+      title: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+      date: new Date().toLocaleDateString(),
+      url: URL.createObjectURL(file)
+    });
+
+    input.value = "";
+    renderVideos(videos);
+  }
+
+  // ===== DELETE VIDEO =====
+  function deleteVideo(id) {
+    if (!isAdmin) return;
+    if (!confirm("Delete this video?")) return;
+    videos = videos.filter(v => v.id !== id);
+    renderVideos(videos);
+  }
+
+  // ===== RENDER =====
+  function renderVideos(list) {
+    const container = document.getElementById("videoList");
+    container.innerHTML = "";
+
+    if (list.length === 0) {
+      container.innerHTML = "<p>No videos available.</p>";
+      return;
+    }
+
+    list.forEach(video => {
+      const card = document.createElement("div");
+      card.className = "video-card";
+      card.innerHTML = `
+        <h3>${video.title}</h3>
+        <p>${video.size}</p>
+        <p>${video.date}</p>
+        <a href="${video.url}" download="${video.title}">
+          <button>Download</button>
+        </a>
+        ${isAdmin ? `<br/><button class="danger" onclick="deleteVideo(${video.id})">Delete</button>` : ""}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  // ===== SEARCH =====
+  function searchVideos() {
+    const q = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = videos.filter(v => v.title.toLowerCase().includes(q));
+    renderVideos(filtered);
+  }
+</script>
+
+</body>
+</html>
